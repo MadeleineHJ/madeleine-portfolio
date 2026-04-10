@@ -12,7 +12,7 @@ load_dotenv()
 
 PROJECT_ID = os.environ["GCP_PROJECT_ID"]
 DATASET    = "raw_football"
-SEASON     = "2024"
+SEASON     = "2025"
 
 API_KEY    = os.environ["FOOTBALL_API_KEY"]
 BASE_URL   = "https://api.football-data.org/v4"
