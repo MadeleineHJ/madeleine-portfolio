@@ -1,0 +1,9 @@
+# dbt
+target/
+dbt_packages/
+logs/
+
+# credentials — never commit these
+*.json
+.env
+profiles.yml
