@@ -2,11 +2,8 @@ name: Football Pipeline
 
 on:
   schedule:
-    - cron: '0 6 * * 1'  # runs every week at 6am UTC
+    - cron: '0 6 * * 1'  # runs every Monday at 6am UTC
   workflow_dispatch:       # allows manual trigger from GitHub
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   run_pipeline:
@@ -37,6 +34,24 @@ jobs:
 
       - name: Install dbt
         run: pip install dbt-bigquery
+
+      - name: Create dbt profiles
+        run: |
+          mkdir -p /home/runner/.dbt
+          cat <<EOF > /home/runner/.dbt/profiles.yml
+          dbt_project:
+            target: dev
+            outputs:
+              dev:
+                type: bigquery
+                method: service-account
+                project: ${{ secrets.GCP_PROJECT_ID }}
+                dataset: dbt_football
+                location: US
+                keyfile: /tmp/sa_key.json
+                threads: 4
+                timeout_seconds: 300
+          EOF
 
       - name: Run dbt
         env:
