@@ -1,0 +1,20 @@
+name: 'dbt_project'
+version: '1.0.0'
+profile: 'dbt_project'
+
+model-paths: ["data_transformation/models"]
+analysis-paths: ["data_transformation/analyses"]
+test-paths: ["data_transformation/tests"]
+seed-paths: ["data_transformation/seeds"]
+macro-paths: ["data_transformation/macros"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  dbt_project:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table
