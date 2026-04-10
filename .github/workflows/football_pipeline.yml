@@ -4,6 +4,9 @@ on:
   schedule:
     - cron: '0 6 * * 1'  # runs every week at 6am UTC
   workflow_dispatch:       # allows manual trigger from GitHub
+  env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true   # add this
+
 
 jobs:
   run_pipeline:
