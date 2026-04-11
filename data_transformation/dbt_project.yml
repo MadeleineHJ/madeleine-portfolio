@@ -2,11 +2,11 @@ name: 'dbt_project'
 version: '1.0.0'
 profile: 'dbt_project'
 
-model-paths: ["data_transformation/models"]
-analysis-paths: ["data_transformation/analyses"]
-test-paths: ["data_transformation/tests"]
-seed-paths: ["data_transformation/seeds"]
-macro-paths: ["data_transformation/macros"]
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
 
 clean-targets:
   - "target"
@@ -14,7 +14,9 @@ clean-targets:
 
 models:
   dbt_project:
-    staging:
+    bronze_layer:
       +materialized: view
-    marts:
+    silver_layer:
+      +materialized: view
+    gold_layer:
       +materialized: table

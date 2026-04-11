@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: raw_football
+    project: my-project-153-370418
+    dataset: raw_football
+    tables:
+      - name: matches
+      - name: standings
+      - name: top_scorers
