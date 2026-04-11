@@ -15,8 +15,11 @@ clean-targets:
 models:
   dbt_project:
     bronze_layer:
-      +materialized: view
+      bronze_football:
+        +schema: brz_football
     silver_layer:
-      +materialized: view
+      silver_football:
+        +schema: slv_football
     gold_layer:
-      +materialized: table
+      gold_football:
+        +schema: gld_football
