@@ -10,12 +10,12 @@ load_dotenv()
 
 # Config
 PROJECT_ID = os.environ["GCP_PROJECT_ID"]
-DATASET    = "raw_football"
-SEASON     = "2025"
+DATASET = "raw_football"
+SEASON = "2025"
 
-API_KEY    = os.environ["FOOTBALL_API_KEY"]
-BASE_URL   = "https://api.football-data.org/v4"
-LEAGUE     = "PL"
+API_KEY = os.environ["FOOTBALL_API_KEY"]
+BASE_URL = "https://api.football-data.org/v4"
+LEAGUE = "PL"
 
 HEADERS = {"X-Auth-Token": API_KEY}
 
@@ -24,25 +24,35 @@ HEADERS = {"X-Auth-Token": API_KEY}
 def fetch(endpoint: str, params: dict = None) -> dict:
     if params is None:
         params = {}
+
     url = f"{BASE_URL}/{endpoint}"
     response = requests.get(url, headers=HEADERS, params=params)
     response.raise_for_status()
     return response.json()
 
 
-# Return raw JSON only
+# Scrapers: one row per item, JSON only
 def get_standings() -> pd.DataFrame:
     print("Fetching standings...")
     data = fetch(f"competitions/{LEAGUE}/standings", {"season": SEASON})
 
-    df = pd.DataFrame([{
-        "endpoint": "standings",
-        "season": SEASON,
-        "raw_json": json.dumps(data),
-        "scraped_at": pd.Timestamp.utcnow().isoformat(),
-    }])
+    rows = []
+    scraped_at = pd.Timestamp.utcnow().isoformat()
 
-    print(f"  → {len(df)} row")
+    for standing in data.get("standings", []):
+        standing_type = standing.get("type")
+
+        for entry in standing.get("table", []):
+            rows.append({
+                "standing_type": standing_type,
+                "team_id": entry.get("team", {}).get("id"),
+                "season": SEASON,
+                "raw_json": json.dumps(entry),
+                "scraped_at": scraped_at,
+            })
+
+    df = pd.DataFrame(rows)
+    print(f"  -> {len(df)} rows")
     return df
 
 
@@ -50,14 +60,19 @@ def get_matches() -> pd.DataFrame:
     print("Fetching matches...")
     data = fetch(f"competitions/{LEAGUE}/matches", {"season": SEASON})
 
-    df = pd.DataFrame([{
-        "endpoint": "matches",
-        "season": SEASON,
-        "raw_json": json.dumps(data),
-        "scraped_at": pd.Timestamp.utcnow().isoformat(),
-    }])
+    rows = []
+    scraped_at = pd.Timestamp.utcnow().isoformat()
 
-    print(f"  → {len(df)} row")
+    for match in data.get("matches", []):
+        rows.append({
+            "match_id": match.get("id"),
+            "season": SEASON,
+            "raw_json": json.dumps(match),
+            "scraped_at": scraped_at,
+        })
+
+    df = pd.DataFrame(rows)
+    print(f"  -> {len(df)} rows")
     return df
 
 
@@ -65,14 +80,19 @@ def get_top_scorers() -> pd.DataFrame:
     print("Fetching top scorers...")
     data = fetch(f"competitions/{LEAGUE}/scorers", {"season": SEASON, "limit": 50})
 
-    df = pd.DataFrame([{
-        "endpoint": "top_scorers",
-        "season": SEASON,
-        "raw_json": json.dumps(data),
-        "scraped_at": pd.Timestamp.utcnow().isoformat(),
-    }])
+    rows = []
+    scraped_at = pd.Timestamp.utcnow().isoformat()
 
-    print(f"  → {len(df)} row")
+    for entry in data.get("scorers", []):
+        rows.append({
+            "player_id": entry.get("player", {}).get("id"),
+            "season": SEASON,
+            "raw_json": json.dumps(entry),
+            "scraped_at": scraped_at,
+        })
+
+    df = pd.DataFrame(rows)
+    print(f"  -> {len(df)} rows")
     return df
 
 
@@ -80,6 +100,7 @@ def get_top_scorers() -> pd.DataFrame:
 def create_dataset_if_not_exists():
     client = bigquery.Client(project=PROJECT_ID)
     dataset_id = f"{PROJECT_ID}.{DATASET}"
+
     try:
         client.get_dataset(dataset_id)
         print(f"Dataset {DATASET} already exists")
@@ -107,7 +128,7 @@ def load_to_bigquery(df: pd.DataFrame, table_name: str) -> None:
     job.result()
 
     table = client.get_table(full_table_id)
-    print(f"Loaded {table.num_rows} rows into {full_table_id}")
+    print(f"Loaded {table.num_rows} rows -> {full_table_id}")
 
 
 # Main
